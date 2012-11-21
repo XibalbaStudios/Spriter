@@ -23,6 +23,9 @@
 -- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
 --
 
+-- Standard library imports --
+local tonumber = tonumber
+
 -- Modules --
 local utils = require("spriter_imp.utils")
 
@@ -32,7 +35,7 @@ local function File (file, data, folder)
 	local file_data = { type = ftype }
 
 	if ftype == "image" or ftype == "atlas_image" then
-		file_data.pivot_x, file_data.pivot_y = file.pivot_x or 0, file.pivot_y or 0
+		file_data.pivot_x, file_data.pivot_y = tonumber(file.pivot_x) or 0, tonumber(file.pivot_y) or 0
 
 		if ftype == "image" then
 			-- DoImage
