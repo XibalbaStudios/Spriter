@@ -29,6 +29,9 @@ local tonumber = tonumber
 -- Modules --
 local utils = require("spriter_imp.utils")
 
+-- Exports --
+local M = {}
+
 --
 local function File (file, data, folder)
 	local ftype = file.type or "image"
@@ -49,8 +52,11 @@ local function File (file, data, folder)
 	return file_data
 end
 
---
-return function(folder, data, props)
+--- DOCME
+-- @ptable folder
+-- @ptable data
+-- @ptable props
+function M.LoadPass (folder, data, props)
 	local folders, folder_data = data._folders or utils.NewLUT(), utils.NewLUT()
 
 	for _, file, fprops in utils.Children(folder) do
@@ -67,3 +73,12 @@ return function(folder, data, props)
 
 	data._folders = folders
 end
+
+--- DOCME
+-- @ptable data
+function M.Process (data)
+	-- ??
+end
+
+-- Export the module.
+return M

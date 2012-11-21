@@ -24,6 +24,8 @@
 --
 
 -- Modules --
+local entity = require("spriter_imp.entity")
+local folder = require("spriter_imp.folder")
 local utils = require("spriter_imp.utils")
 local xml = require("xml")
 
@@ -39,8 +41,10 @@ local Parser = xml.newParser()
 -- --
 local TopLevel = utils.FuncTable()
 
-TopLevel.entity = require("spriter_imp.entity")
-TopLevel.folder = require("spriter_imp.folder")
+TopLevel.entity = entity.LoadPass
+TopLevel.folder = folder.LoadPass
+
+-- Atlas, character map, etc.
 
 --- DOCME
 -- @pgroup group
@@ -51,6 +55,7 @@ function M.New (group, file, base)
 		file = file .. ".scml"
 	end
 
+	--
 	local t = Parser:loadFile(file, base)
 	local data = { _file = file, _base = base or system.ResourceDirectory }
 
@@ -58,10 +63,12 @@ function M.New (group, file, base)
 		TopLevel(child, data, cprops)
 	end
 
-	-- Process!
+	--
+	entity.Process(data)
+	folder.Process(data)
 
 --	vdump(t)
-	vdump(data)
+--	vdump(data)
 end
 
 -- Export the module.

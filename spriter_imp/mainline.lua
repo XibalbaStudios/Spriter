@@ -24,17 +24,22 @@
 --
 
 -- Standard library imports --
+local ipairs = ipairs
 local tonumber = tonumber
 
 -- Modules --
+local object = require("spriter_imp.object")
 local utils = require("spriter_imp.utils")
+
+-- Exports --
+local M = {}
 
 -- --
 local MainlineKey = utils.FuncTable()
 
 --
 function MainlineKey:object (data, oprops)
--- Err... not in Example.SCML... do timeline first, I guess
+-- Err... not in Example.SCML...
 --[[
 	--
 	local folder, file
@@ -55,8 +60,11 @@ function MainlineKey:object_ref (data, oprops)
 	}
 end
 
---
-return function(mainline, data, animation)
+--- DOCME
+-- @ptable mainline
+-- @ptable data
+-- @ptable animation
+function M.LoadPass (mainline, data, animation)
 --assert(not animation._mainline)
 	local mainline_data = {}
 
@@ -74,3 +82,28 @@ return function(mainline, data, animation)
 
 	animation._mainline = mainline_data
 end
+
+--- DOCME
+-- @ptable data
+-- @ptable animation
+function M.Process (data, animation)
+	for _, key_data in ipairs(animation._mainline) do
+		for _, object_data in ipairs(key_data) do
+			-- object_ref: Resolve timeline, discard intermediates
+			if object_data.z_index then
+				object_data.timeline, object_data.key = animation[object_data.timeline][object_data.key]
+
+			-- object: Resolve object properties (file, default values), discard intermediates
+			-- TODO: Untested!
+			elseif #object_data == 0 then
+				object.Process(data, object_data)
+
+			-- hierarchy: TODO!
+			else
+			end
+		end
+	end
+end
+
+-- Export the module.
+return M

@@ -27,7 +27,11 @@
 local tonumber = tonumber
 
 -- Modules --
+local object = require("spriter_imp.object")
 local utils = require("spriter_imp.utils")
+
+-- Exports --
+local M = {}
 
 -- --
 local TimelineKey = utils.FuncTable()
@@ -38,48 +42,17 @@ end
 
 --
 function TimelineKey:object (data, oprops, object_type)
-	local object_data = {}
-
-	--
-	if object_type == "sprite" or object_type == "entity" or object_type == "sound" then
-		object_data.folder = utils.Index(oprops, "folder")
-		object_data.file = utils.Index(oprops, "file")
-
-		--
-		if object_type ~= "sound" then
-			object_data.scale_x = tonumber(oprops.scale_x) or 1
-			object_data.scale_y = tonumber(oprops.scale_y) or 1
-		end
-	end
-
-	--
-	if object_type ~= "variable" and object_type ~= "sound" then
-		object_data.x = tonumber(oprops.x) or 0
-		object_data.y = tonumber(oprops.y) or 0
-		object_data.a = tonumber(oprops.a) or 0
-
-		--
-		if object_type == "sprite" or object_type == "box" then
-			local def = object_type == "box" and 0 or false
-
-			object_data.pivot_x = tonumber(oprops.pivot_x) or def
-			object_data.pivot_y = tonumber(oprops.pivot_y) or def
-		end
-
-		--
-		if object_type ~= "point" then
-			object_data.angle = tonumber(oprops.angle) or 0
-		end
-	end
-
-	return object_data
+	return object.LoadPass(oprops, object_type)
 end
 
 -- --
 local UsageDefs = { box = "collision", point = "neither", entity = "display", sprite = "display" }
 
---
-return function(timeline, data, animation)
+--- DOCME
+-- @ptable timeline
+-- @ptable data
+-- @ptable animation
+function M.LoadPass (timeline, data, animation)
 	local timeline_data, tprops = {}, timeline.properties
 
 	--
@@ -117,4 +90,27 @@ return function(timeline, data, animation)
 	end
 
 	utils.AddByID(animation, timeline_data, tprops)
+end	
+
+--- DOCME
+-- @ptable data
+-- @ptable animation
+function M.Process (data, animation)
+	for _, timeline_data in ipairs(animation) do
+		for _, key_data in ipairs(timeline_data) do
+			for _, object_data in ipairs(key_data) do
+				-- Resolve object properties (file, default values), discard intermediates
+				if object_data.is_object then
+					object.Process(data, object_data)
+
+				-- TODO: bone, variable?
+				else
+					-- ??
+				end
+			end
+		end
+	end
 end
+
+-- Export the module.
+return M

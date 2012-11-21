@@ -24,19 +24,28 @@
 --
 
 -- Standard library imports --
+local ipairs = ipairs
 local tonumber = tonumber
 
 -- Modules --
+local mainline = require("spriter_imp.mainline")
+local timeline = require("spriter_imp.timeline")
 local utils = require("spriter_imp.utils")
+
+-- Exports --
+local M = {}
 
 -- --
 local Animation = utils.FuncTable()
 
-Animation.mainline = require("spriter_imp.mainline")
-Animation.timeline = require("spriter_imp.timeline")
+Animation.mainline = mainline.LoadPass
+Animation.timeline = timeline.LoadPass
 
---
-return function(entity, data, eprops)
+--- DOCME
+-- @ptable entity
+-- @ptable data
+-- @ptable eprops
+function M.LoadPass (entity, data, eprops)
 	local entities, entity_data = data._entities or utils.NewLUT(), utils.NewLUT()
 
 	for _, anim, aprops in utils.Children(entity) do
@@ -61,3 +70,18 @@ return function(entity, data, eprops)
 
 	data._entities = entities
 end
+
+--- DOCME
+-- @ptable data
+function M.Process (data)
+-- assert(data._entities)
+	for _, entity_data in ipairs(data._entities) do
+		for _, anim_data in ipairs(entity_data) do
+			mainline.Process(data, anim_data)
+			timeline.Process(data, anim_data)
+		end
+	end
+end
+
+-- Export the module.
+return M
