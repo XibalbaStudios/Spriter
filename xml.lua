@@ -52,7 +52,7 @@ function newParser()
 
 	function XmlParser:ParseArgs(s)
 	  local arg = {}
-	  string.gsub(s, "(%w+)=([\"'])(.-)%2", function (w, _, a)
+	  string.gsub(s, "([_%w]+)=([\"'])(.-)%2", function (w, _, a)
 			arg[w] = self:FromXmlString(a);
 		end)
 	  return arg
@@ -65,7 +65,7 @@ function newParser()
 	  local ni,c,label,xarg, empty
 	  local i, j = 1, 1
 	  while true do
-		ni,j,c,label,xarg, empty = string.find(xmlText, "<(%/?)([%w:]+)(.-)(%/?)>", i)
+		ni,j,c,label,xarg, empty = string.find(xmlText, "<(%/?)([_%w:]+)(.-)(%/?)>", i)
 		if not ni then break end
 		local text = string.sub(xmlText, i, ni-1);
 		if not string.find(text, "^%s*$") then

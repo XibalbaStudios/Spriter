@@ -23,6 +23,9 @@
 -- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
 --
 
+-- Standard library imports --
+local tonumber = tonumber
+
 -- Modules --
 local utils = require("spriter_imp.utils")
 
@@ -30,13 +33,46 @@ local utils = require("spriter_imp.utils")
 local TimelineKey = utils.FuncTable()
 
 --
-function TimelineKey:object (data, key)
+function TimelineKey:bone (data, bprops)
+end
+
+--
+function TimelineKey:object (data, oprops, object_type)
+	local object_data = {}
+
 	--
-	local folder, file
-	local x, y = self.x or 0, self.y or 0
-	local xref, yref = self.pivot_x or 0, self.pivot_y or 0 -- or def if sprite
-	local angle, xscale, yscale = self.angle or 0, self.scale_x or 1, self.scale_y or 1
-	local alpha = self.a or 1
+	if object_type == "sprite" or object_type == "entity" or object_type == "sound" then
+		object_data.folder = utils.Index(oprops, "folder")
+		object_data.file = utils.Index(oprops, "file")
+
+		--
+		if object_type ~= "sound" then
+			object_data.scale_x = tonumber(oprops.scale_x) or 1
+			object_data.scale_y = tonumber(oprops.scale_y) or 1
+		end
+	end
+
+	--
+	if object_type ~= "variable" and object_type ~= "sound" then
+		object_data.x = tonumber(oprops.x) or 0
+		object_data.y = tonumber(oprops.y) or 0
+		object_data.a = tonumber(oprops.a) or 0
+
+		--
+		if object_type == "sprite" or object_type == "box" then
+			local def = object_type == "box" and 0 or false
+
+			object_data.pivot_x = tonumber(oprops.pivot_x) or def
+			object_data.pivot_y = tonumber(oprops.pivot_y) or def
+		end
+
+		--
+		if object_type ~= "point" then
+			object_data.angle = tonumber(oprops.angle) or 0
+		end
+	end
+
+	return object_data
 end
 
 -- --
@@ -44,30 +80,41 @@ local UsageDefs = { box = "collision", point = "neither", entity = "display", sp
 
 --
 return function(timeline, data, animation)
-	local id, object_type, usage = timeline.id, timeline.object_type or "sprite"
-	local name, usage
+	local timeline_data, tprops = {}, timeline.properties
+
+	--
+	local object_type, usage = tprops.object_type or "sprite"
 
 	if object_type ~= "sound" then
 		if object_type ~= "variable" then
-			usage = timeline.usage or UsageDefs[object_type]
+			usage = tprops.usage or UsageDefs[object_type]
 		end
 
 		if object_type ~= "sprite" or (usage == "collision" or usage == "both") then
-			name = timeline.name
+			timeline_data.name = tprops.name
 		end
 
 		if object_type == "variable" then
-			-- SOMETHING = timeline.variable_type or "string"
+			timeline_data.variable_type = tprops.variable_type or "string"
 		end
 	end
 
+	timeline_data.usage = usage
+
 	--
 	for _, key, kprops in utils.Children(timeline) do
-		local id, time, curve_type, spin = key.id, key.time or 0, key.curve_type or "linear", key.spin or 1
+		local key_data = {
+			curve_type = kprops.curve_type or "linear",
+			spin = tonumber(kprops.spin) or 1,
+			time = tonumber(kprops.time) or 0
+		}
 --assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
-			--
-			TimelineKey(child, data, key)
+			key_data[#key_data + 1] = TimelineKey(child, data, cprops, object_type)
 		end
+
+		utils.AddByID(timeline_data, key_data, kprops)
 	end
+
+	utils.AddByID(animation, timeline_data, tprops)
 end

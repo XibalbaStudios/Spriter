@@ -34,7 +34,7 @@ local AA=0
 -- @param ... Format arguments.
 function printf (s, ...)
 if AA == 250 then
-return
+--	return
 else
 	AA = AA + 1
 end

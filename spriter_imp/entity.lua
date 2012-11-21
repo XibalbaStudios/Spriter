@@ -23,6 +23,9 @@
 -- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
 --
 
+-- Standard library imports --
+local tonumber = tonumber
+
 -- Modules --
 local utils = require("spriter_imp.utils")
 
@@ -37,7 +40,10 @@ return function(entity, data, eprops)
 	local entities, entity_data = data._entities or utils.NewLUT(), utils.NewLUT()
 
 	for _, anim, aprops in utils.Children(entity) do
-		local anim_data = { _mainline = {}, length = aprops.length, looping = aprops.looping, loop_to = aprops.loop_to or 0 }
+		local anim_data = {
+			looping = aprops.looping, loop_to = aprops.loop_to or 0,
+			length = tonumber(aprops.length)
+		}
 --assert(anim.name == "animation") ??
 --		Animation(anim, data)
 

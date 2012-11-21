@@ -35,12 +35,22 @@ local vdump = vdump
 local M = {}
 
 --- DOCME
+-- @ptable t
+-- @param data
+-- @ptable props
+function M.AddByID (t, data, props)
+	t[M.Index(props)] = data
+end
+
+--- DOCME
 -- @ptable lut
 -- @param data
 -- @ptable props
 function M.AddToLUT (lut, data, props)
-	lut._id[tonumber(props.id) + 1] = data
-	lut._name[props.name] = data
+	local index = M.Index(props)
+
+	lut[index] = data
+	lut._name[props.name] = index
 end
 
 --
@@ -84,8 +94,8 @@ end
 
 -- --
 local FuncsMT = {
-	__call = function(t, elem, data, arg)
-		return t[elem.name](elem, data, arg)
+	__call = function(t, elem, data, arg1, arg2)
+		return t[elem.name](elem, data, arg1, arg2)
 	end,
 	__index = function(_, key)
 		print(key .. " not yet exported / implemented")
@@ -99,9 +109,17 @@ function M.FuncTable ()
 end
 
 --- DOCME
+-- @ptable props
+-- @string key
+-- @treturn uint X
+function M.Index (props, key)
+	return tonumber(props[key or "id"]) + 1
+end
+
+--- DOCME
 -- @treturn table Z
 function M.NewLUT ()
-	return { _id = {}, _name = {} }
+	return { _name = {} }
 end
 
 -- Export the module.
