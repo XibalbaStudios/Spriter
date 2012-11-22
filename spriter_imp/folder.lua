@@ -33,12 +33,12 @@ local utils = require("spriter_imp.utils")
 local M = {}
 
 --
-local function File (file, folder)
-	local ftype = file.type or "image"
-	local file_data = { type = ftype }
+local function File (fprops)
+	local ftype = fprops.type or "image"
+	local file_data = { name = fprops.name, type = ftype, width = tonumber(fprops.width) or 0, height = tonumber(fprops.height) or 0 }
 
 	if ftype == "image" or ftype == "atlas_image" then
-		file_data.pivot_x, file_data.pivot_y = tonumber(file.pivot_x) or 0, tonumber(file.pivot_y) or 0
+		file_data.pivot_x, file_data.pivot_y = tonumber(fprops.pivot_x) or 0, tonumber(fprops.pivot_y) or 0
 
 		if ftype == "image" then
 			-- DoImage
@@ -55,13 +55,13 @@ end
 --- DOCME
 -- @ptable folder
 function M.LoadPass (folder)
-	local folder_data = utils.NewLUT()
+	local folder_data = {}
 
 	for _, file, fprops in utils.Children(folder) do
 --assert(file.name == "file") ??
-		local file_data = File(file, folder_data)
+		local file_data = File(fprops)
 
-		utils.AddToLUT(folder_data, file_data, fprops)
+		utils.AddByID(folder_data, file_data, fprops)
 	end
 
 	return folder_data

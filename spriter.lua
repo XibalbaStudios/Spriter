@@ -26,6 +26,7 @@
 -- Standard library imports --
 local pairs = pairs
 local setmetatable = setmetatable
+local type = type
 
 -- Modules --
 local entity = require("spriter_imp.entity")
@@ -143,7 +144,7 @@ end
 
 --- DOCME
 -- @string name
-function Entity:prepare (name)
+function Entity:setSequence (name)
 	-- Hide any transients
 	-- Cancel sounds?
 
@@ -153,31 +154,35 @@ end
 --
 
 --- DOCME
--- @pgroup group
+-- @pgroup parent
 -- @string name
 -- @treturn pobject X
-function EntityFactory:New (group, name)
+function EntityFactory:New (parent, name)
 	local entity = display.newGroup()
 
-	group:insert(entity)
+	--
+	if type(parent) == "string" then
+		name, parent = parent
+	elseif parent then
+		parent:insert(entity)
+	end
 
 	--
 	local id = utils.IDFromNameInLUT(self.entity, name) or 1
 	local data = self.entity[id]
 
-	--
-	-- load up images, time = 0 properties
+	-- Load up images.
 
 	--
 	entity.m_data = data
 	entity.m_time = 0
 
-	--
+	-- Install methods.
 	for k, v in pairs(Entity) do
 		entity[k] = v
 	end
 
-	--
+	-- Assign time = 0 properties, using first animation.
 	Prepare(entity, 1)
 
 	--
