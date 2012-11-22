@@ -43,10 +43,8 @@ Animation.timeline = timeline.LoadPass
 
 --- DOCME
 -- @ptable entity
--- @ptable data
--- @ptable eprops
-function M.LoadPass (entity, data, eprops)
-	local entities, entity_data = data._entities or utils.NewLUT(), utils.NewLUT()
+function M.LoadPass (entity)
+	local entity_data = utils.NewLUT()
 
 	for _, anim, aprops in utils.Children(entity) do
 		local anim_data = {
@@ -54,28 +52,21 @@ function M.LoadPass (entity, data, eprops)
 			length = tonumber(aprops.length)
 		}
 --assert(anim.name == "animation") ??
---		Animation(anim, data)
-
---		utils.Dump("ANIM: ", anim, _)
 		for _, aelem in utils.Children(anim) do
---			utils.Dump("AELEM: ", aelem, _)
-			Animation(aelem, data, anim_data)
+			Animation(aelem, anim_data)
 		end
 -- assert(anim._timeline)
 		utils.AddToLUT(entity_data, anim_data, aprops)
 	end
 
-	--
-	utils.AddToLUT(entities, entity_data, eprops)
-
-	data._entities = entities
+	return entity_data
 end
 
 --- DOCME
 -- @ptable data
 function M.Process (data)
 -- assert(data._entities)
-	for _, entity_data in ipairs(data._entities) do
+	for _, entity_data in ipairs(data.entity) do
 		for _, anim_data in ipairs(entity_data) do
 			mainline.Process(data, anim_data)
 			timeline.Process(data, anim_data)

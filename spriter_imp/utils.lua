@@ -94,11 +94,13 @@ end
 
 -- --
 local FuncsMT = {
-	__call = function(t, elem, data, arg1, arg2)
-		return t[elem.name](elem, data, arg1, arg2)
+	__call = function(t, elem, arg1, arg2)
+		return t[elem.name](elem, arg1, arg2)
 	end,
 	__index = function(_, key)
 		print(key .. " not yet exported / implemented")
+
+		return NoOp
 	end
 }
 
@@ -106,6 +108,22 @@ local FuncsMT = {
 -- @treturn table Y
 function M.FuncTable ()
 	return setmetatable({}, FuncsMT)
+end
+
+--- DOCME
+-- @ptable lut
+-- @string name
+-- @return X
+function M.IDFromNameInLUT (lut, name)
+	if name then
+		for k, v in pairs(lut._name) do
+			if k == name then
+				return v
+			end
+		end
+	else
+		return nil
+	end
 end
 
 --- DOCME

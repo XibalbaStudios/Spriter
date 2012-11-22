@@ -33,7 +33,7 @@ local utils = require("spriter_imp.utils")
 local M = {}
 
 --
-local function File (file, data, folder)
+local function File (file, folder)
 	local ftype = file.type or "image"
 	local file_data = { type = ftype }
 
@@ -54,24 +54,17 @@ end
 
 --- DOCME
 -- @ptable folder
--- @ptable data
--- @ptable props
-function M.LoadPass (folder, data, props)
-	local folders, folder_data = data._folders or utils.NewLUT(), utils.NewLUT()
+function M.LoadPass (folder)
+	local folder_data = utils.NewLUT()
 
 	for _, file, fprops in utils.Children(folder) do
---utils.Dump("FILE", file, _)
---vdump(file)
 --assert(file.name == "file") ??
-		local file_data = File(file, data, folder_data)
+		local file_data = File(file, folder_data)
 
 		utils.AddToLUT(folder_data, file_data, fprops)
 	end
 
-	--
-	utils.AddToLUT(folders, folder_data, props)
-
-	data._folders = folders
+	return folder_data
 end
 
 --- DOCME

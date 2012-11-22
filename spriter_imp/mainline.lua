@@ -38,7 +38,7 @@ local M = {}
 local MainlineKey = utils.FuncTable()
 
 --
-function MainlineKey:object (data, oprops)
+function MainlineKey:object (oprops)
 -- Err... not in Example.SCML...
 --[[
 	--
@@ -52,7 +52,7 @@ function MainlineKey:object (data, oprops)
 end
 
 --
-function MainlineKey:object_ref (data, oprops)
+function MainlineKey:object_ref (oprops)
 	return {
 		key = utils.Index(oprops, "key"),
 		timeline = utils.Index(oprops, "timeline"),
@@ -62,17 +62,16 @@ end
 
 --- DOCME
 -- @ptable mainline
--- @ptable data
 -- @ptable animation
-function M.LoadPass (mainline, data, animation)
---assert(not animation._mainline)
+function M.LoadPass (mainline, animation)
+--assert(not animation.mainline)
 	local mainline_data = {}
 
 	for _, key, kprops in utils.Children(mainline) do
 		local key_data = { time = tonumber(kprops.time) or 0 }
 --assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
-			local object_data = MainlineKey(child, data, cprops)
+			local object_data = MainlineKey(child, cprops)
 
 			utils.AddByID(key_data, object_data, cprops)
 		end
@@ -80,14 +79,14 @@ function M.LoadPass (mainline, data, animation)
 		utils.AddByID(mainline_data, key_data, kprops)
 	end
 
-	animation._mainline = mainline_data
+	animation.mainline = mainline_data
 end
 
 --- DOCME
 -- @ptable data
 -- @ptable animation
 function M.Process (data, animation)
-	for _, key_data in ipairs(animation._mainline) do
+	for _, key_data in ipairs(animation.mainline) do
 		for _, object_data in ipairs(key_data) do
 			-- object_ref: Resolve timeline, discard intermediates
 			if object_data.z_index then

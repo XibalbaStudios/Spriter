@@ -37,11 +37,11 @@ local M = {}
 local TimelineKey = utils.FuncTable()
 
 --
-function TimelineKey:bone (data, bprops)
+function TimelineKey:bone (bprops)
 end
 
 --
-function TimelineKey:object (data, oprops, object_type)
+function TimelineKey:object (oprops, object_type)
 	return object.LoadPass(oprops, object_type)
 end
 
@@ -50,9 +50,8 @@ local UsageDefs = { box = "collision", point = "neither", entity = "display", sp
 
 --- DOCME
 -- @ptable timeline
--- @ptable data
 -- @ptable animation
-function M.LoadPass (timeline, data, animation)
+function M.LoadPass (timeline, animation)
 	local timeline_data, tprops = {}, timeline.properties
 
 	--
@@ -83,7 +82,7 @@ function M.LoadPass (timeline, data, animation)
 		}
 --assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
-			key_data[#key_data + 1] = TimelineKey(child, data, cprops, object_type)
+			key_data[#key_data + 1] = TimelineKey(child, cprops, object_type)
 		end
 
 		utils.AddByID(timeline_data, key_data, kprops)

@@ -79,7 +79,7 @@ end
 -- @ptable data
 -- @ptable object
 function M.Process (data, object)
-	local folder = data._folders[object.folder]
+	local folder = data.folder[object.folder]
 	local file = folder and folder[object.file]
 
 	if file then
