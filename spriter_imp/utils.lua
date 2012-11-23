@@ -29,7 +29,6 @@ local print = print
 local setmetatable = setmetatable
 local tonumber = tonumber
 local type = type
-local vdump = vdump
 
 -- Exports --
 local M = {}

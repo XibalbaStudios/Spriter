@@ -27,6 +27,7 @@
 local assert = assert
 local pairs = pairs
 local tonumber = tonumber
+local type = type
 
 -- Modules --
 local utils = require("spriter_imp.utils")
@@ -41,13 +42,11 @@ local Props = {}
 local Interpolate = {}
 
 --
-function Interpolate.sprite (entity, object_data, props)
-	local group = entity.m_objects[object_data.timeline]
-
-	object_data = object_data[1] -- TODO: Flatten, I think...
+function Interpolate.sprite (entity, timeline, props)
+	local group = entity.m_objects[timeline]
 
 	--
-	local name = object_data.file.name
+	local name = props.file.name
 
 	if group.m_name ~= name then
 		if group.numChildren ~= 0 then
@@ -56,20 +55,20 @@ function Interpolate.sprite (entity, object_data, props)
 
 		local data = entity.m_data
 
-		display.newImage(group, file, data.base)
+		display.newImage(group, data.path .. name, data.base)
 
 		group.m_name = name
 	end
 
 	local image = group[1]
-
+-- if not image...
 	-- image, atlas_image...
 	image.alpha = props.a
 	image.x = props.x
-	image.y = props.y
+	image.y = -props.y
 	image.xReference = image.width * (props.pivot_x - .5)
-	image.yReference = image.height * (props.pivot_y - .5)
-	image.rotation = props.angle
+	image.yReference = image.height * (.5 - props.pivot_y)
+	image.rotation = 360 - props.angle -- spin?
 	image.xScale = props.scale_x
 	image.yScale = props.scale_y
 end
@@ -82,24 +81,29 @@ function M.Interpolate (entity, object_data, to)
 	local anim = entity.m_anim
 	local timeline, key = anim[object_data.timeline], object_data.key
 	local p1, p2, props = timeline[key], timeline[key + 1], Props
+	local object_type = p1[1].object_type -- TODO: Flatten... (move into timeline?)
 
 	--
 	if p1.time == to or not p2 then
-		props = p1
+		props = p1[1] -- TODO: Flatten...
 	elseif to >= p2.time then
-		props = p2
+		props = p2[1] -- TODO: Flatten...
 	else
 		local t = (to - p1.time) / (p2.time - p1.time)
 
+		p1, p2 = p1[1], p2[1] -- TODO: Flatten...
+
 		for k, v in pairs(p1) do
-			if k ~= "object_type" then
+			if type(v) == "number" then
 				Props[k] = v + t * (p2[k] - v)
 			end
 		end
+
+		Props.file = p1.file
 	end
 
 	--
-	Interpolate[object_data.object_type](entity, object_data, props)
+	Interpolate[object_type](entity, object_data.timeline, props)
 end
 
 --- DOCME
@@ -125,7 +129,7 @@ function M.LoadPass (oprops, object_type)
 	if object_type ~= "variable" and object_type ~= "sound" then
 		object_data.x = tonumber(oprops.x) or 0
 		object_data.y = tonumber(oprops.y) or 0
-		object_data.a = tonumber(oprops.a) or 0
+		object_data.a = tonumber(oprops.a) or 1
 
 		--
 		if object_type == "sprite" or object_type == "box" then

@@ -66,4 +66,10 @@ end
 
 local sf = spriter.NewFactory("monster/Example")
 
-sf:New()
+local sp = sf:New()
+
+sp:setSequence("Posture")
+
+sp:play()
+
+sp.x, sp.y = 200, 500

@@ -76,6 +76,9 @@ function M.NewFactory (file, base)
 	local t = Parser:loadFile(file, base)
 	local data = { file = file, base = base or system.ResourceDirectory	}
 
+	data.path = file:gsub("/.*$", "") .. "/"
+	data.path = data.path:gsub("\\", "/")
+
 	for _, child, cprops in utils.Children(t) do
 		local cdata = TopLevel(child, cprops, data[child.name])
 
@@ -118,7 +121,7 @@ end
 --
 local function WipeGroup (group)
 	for i = group.numChildren, 1, -1 do
-		group:removeSelf()
+		group[i]:removeSelf()
 	end
 end
 
@@ -144,11 +147,9 @@ local function AuxUpdateEntity (entity, from, to)
 
 	--
 	-- Interpolate up to current key
-	for _, key in ipairs(mainline[ki]) do
-		for _, object_data in ipairs(key) do
-			if object_data.key then
-				object.Interpolate(entity, object_data, to)
-			end
+	for _, object_data in ipairs(mainline[ki]) do
+		if object_data.key then
+			object.Interpolate(entity, object_data, to)
 		end
 	end
 
@@ -170,14 +171,18 @@ local function AuxUpdateEntity (entity, from, to)
 	entity.m_index = ki
 
 	--
+	entity.m_time = to
+
 	if to >= anim.length then
 		entity:pause()
+
+		-- dispatch: ended, bounce, etc...
 	end
 end
 
 --
 local function Prepare (entity, anim_id)
-	local anim = entity.m_data[anim_id]
+	local anim = entity.m_animations[anim_id]
 
 	entity.m_anim = anim
 	entity.m_index = nil
@@ -189,7 +194,7 @@ local function Prepare (entity, anim_id)
 		objects:insert(display.newGroup())
 	end
 
-	AuxUpdateEntity(entity, 0, -1)
+	AuxUpdateEntity(entity, 0, 0)
 
 	entity:pause()
 end
@@ -201,7 +206,7 @@ function Entity:setSequence (name)
 	WipeGroup(self.m_objects)
 	WipeGroup(self.m_transients)
 
-	Prepare(self, self._name[name])
+	Prepare(self, self.m_animations._name[name])
 end
 
 --
@@ -222,12 +227,9 @@ function EntityFactory:New (parent, name)
 
 	--
 	local id = utils.IDFromNameInLUT(self.entity, name) or 1
-	local data = self.entity[id]
 
-	-- Load up images.
-
-	--
-	entity.m_data = data
+	entity.m_animations = self.entity[id]
+	entity.m_data = self
 	entity.m_objects = display.newGroup()
 	entity.m_transients = display.newGroup()
 
@@ -249,11 +251,13 @@ function EntityFactory:New (parent, name)
 		Runtime:addEventListener("enterFrame", LiveEntities)
 	end
 
+	LiveEntities[#LiveEntities + 1] = entity
+
 	return entity
 end
 
 --
-function LiveEntities:UpdateEntities (event)
+function LiveEntities:enterFrame (event)
 	local last = self.time or event.time
 	local dt = event.time - last
 
