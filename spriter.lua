@@ -188,12 +188,6 @@ local function Prepare (entity, anim_id)
 	entity.m_index = nil
 	entity.m_time = 0
 
-	local objects = entity.m_objects
-
-	for _ = 1, #anim do
-		objects:insert(display.newGroup())
-	end
-
 	AuxUpdateEntity(entity, 0, 0)
 
 	entity:pause()

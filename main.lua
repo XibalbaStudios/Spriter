@@ -73,3 +73,5 @@ sp:setSequence("Posture")
 sp:play()
 
 sp.x, sp.y = 200, 500
+
+transition.to(sp, { time = 2000, x = 250, y = 700 })

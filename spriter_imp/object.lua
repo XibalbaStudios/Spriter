@@ -42,8 +42,19 @@ local Props = {}
 local Interpolate = {}
 
 --
+local function GetTimelineGroup (entity, timeline)
+	local objects = entity.m_objects
+
+	for _ = objects.numChildren + 1, timeline do
+		objects:insert(display.newGroup())
+	end
+
+	return objects[timeline]
+end
+
+--
 function Interpolate.sprite (entity, timeline, props)
-	local group = entity.m_objects[timeline]
+	local group = GetTimelineGroup(entity, timeline)
 
 	--
 	local name = props.file.name
@@ -64,11 +75,11 @@ function Interpolate.sprite (entity, timeline, props)
 -- if not image...
 	-- image, atlas_image...
 	image.alpha = props.a
-	image.x = props.x
-	image.y = -props.y
+	image.x = props.x -- should be offset to reflect Spriter's coordinate system...
+	image.y = -props.y -- ...but doesn't look right... :/
 	image.xReference = image.width * (props.pivot_x - .5)
 	image.yReference = image.height * (.5 - props.pivot_y)
-	image.rotation = 360 - props.angle -- spin?
+	image.rotation = 360 - props.angle % 360
 	image.xScale = props.scale_x
 	image.yScale = props.scale_y
 end
@@ -84,18 +95,31 @@ function M.Interpolate (entity, object_data, to)
 	local object_type = p1[1].object_type -- TODO: Flatten... (move into timeline?)
 
 	--
-	if p1.time == to or not p2 then
+	if p1.time >= to or not p2 then
 		props = p1[1] -- TODO: Flatten...
 	elseif to >= p2.time then
 		props = p2[1] -- TODO: Flatten...
 	else
 		local t = (to - p1.time) / (p2.time - p1.time)
+		local spin = p1.spin
 
 		p1, p2 = p1[1], p2[1] -- TODO: Flatten...
 
 		for k, v in pairs(p1) do
 			if type(v) == "number" then
-				Props[k] = v + t * (p2[k] - v)
+				local v2 = p2[k]
+
+				if k == "angle" then
+					if spin == -1 then
+						if v < v2 then
+							v = v + 360
+						end
+					elseif v2 < v then
+						v2 = v2 + 360
+					end
+				end
+
+				Props[k] = v + t * (v2 - v)
 			end
 		end
 
