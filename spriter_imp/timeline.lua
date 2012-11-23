@@ -84,7 +84,7 @@ function M.LoadPass (timeline, animation)
 		for _, child, cprops in utils.Children(key) do
 			key_data[#key_data + 1] = TimelineKey(child, cprops, object_type)
 		end
-
+-- ^^^ sounds like key will always be one-element and I could flatten it and object / bone together? 
 		utils.AddByID(timeline_data, key_data, kprops)
 	end
 
@@ -99,7 +99,7 @@ function M.Process (data, animation)
 		for _, key_data in ipairs(timeline_data) do
 			for _, object_data in ipairs(key_data) do
 				-- Resolve object properties (file, default values), discard intermediates
-				if object_data.is_object then
+				if object_data.object_type then
 					object.Process(data, object_data)
 
 				-- TODO: bone, variable?

@@ -29,16 +29,11 @@ local print = print
 -- Modules --
 local spriter = require("spriter")
 local var_dump = require("var_dump")
-local AA = 0
+
 --- Helper to print formatted argument.
 -- @string s Format string.
 -- @param ... Format arguments.
 function printf (s, ...)
-if AA == 300 then
-	return
-else
-	AA = AA + 1
-end
 	print(s:format(...))
 end
 
@@ -69,4 +64,6 @@ function vdump (var, name, limit)
 	var_dump.Print(var)
 end
 
-spriter.NewFactory("monster/Example")
+local sf = spriter.NewFactory("monster/Example")
+
+sf:New()

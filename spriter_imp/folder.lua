@@ -38,7 +38,7 @@ local function File (fprops)
 	local file_data = { name = fprops.name, type = ftype, width = tonumber(fprops.width) or 0, height = tonumber(fprops.height) or 0 }
 
 	if ftype == "image" or ftype == "atlas_image" then
-		file_data.pivot_x, file_data.pivot_y = tonumber(fprops.pivot_x) or 0, tonumber(fprops.pivot_y) or 0
+		file_data.pivot_x, file_data.pivot_y = tonumber(fprops.pivot_x) or 0, tonumber(fprops.pivot_y) or 1
 
 		if ftype == "image" then
 			-- DoImage

@@ -88,11 +88,11 @@ end
 function M.Process (data, animation)
 	for _, key_data in ipairs(animation.mainline) do
 		for _, object_data in ipairs(key_data) do
-			-- object_ref: Resolve timeline, discard intermediates
-			if object_data.z_index then
-				object_data.timeline, object_data.key = animation[object_data.timeline][object_data.key]
+			-- object_ref: No op
+			if object_data.key then
+				--
 
-			-- object: Resolve object properties (file, default values), discard intermediates
+			-- object: Resolve object properties (file, default values)
 			-- TODO: Untested!
 			elseif #object_data == 0 then
 				object.Process(data, object_data)

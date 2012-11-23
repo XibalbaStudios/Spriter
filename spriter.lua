@@ -31,6 +31,7 @@ local type = type
 -- Modules --
 local entity = require("spriter_imp.entity")
 local folder = require("spriter_imp.folder")
+local object = require("spriter_imp.object")
 local utils = require("spriter_imp.utils")
 local xml = require("xml")
 
@@ -90,8 +91,6 @@ function M.NewFactory (file, base)
 	--
 	entity.Process(data)
 	folder.Process(data)
-
-	return setmetatable(data, EntityFactory)
 --[[
 local path = system.pathForFile( "myfile.txt", system.DocumentsDirectory )
 local file = io.open( path, "w" )
@@ -99,9 +98,9 @@ require("var_dump").Print(data, function(s, ...)
 	file:write(s:format(...), "\n")
 end)
 io.close( file )
---]]
-
 -- Could check for "Corona-fied" file, i.e. already processed as so...
+--]]
+	return setmetatable(data, EntityFactory)
 end
 
 --- DOCME
@@ -111,33 +110,86 @@ end
 
 --- DOCME
 function Entity:play ()
-	self.m_paused = false
+	if self.m_time < self.m_anim.length then
+		self.m_paused = false
+	end
+end
+
+--
+local function WipeGroup (group)
+	for i = group.numChildren, 1, -1 do
+		group:removeSelf()
+	end
 end
 
 --
 local function AuxUpdateEntity (entity, from, to)
-	--[[
-		with mainline in ANIMATION:
-			for object in OBJECTS do
-				Hide past transients
-				Play sounds? (seek into if necessary)
-				Show valid transients, interpolated
-			end
+	local anim = entity.m_anim
+	local mainline = anim.mainline
+	local ki = entity.m_index or 1
 
-			for ref in OBJECT_REFS do
-				Do each intermediate key
-				Sounds?
-				Interpolate up to current key
+	for i = ki, #mainline do
+		local key = mainline[i]
+		local time = key.time
+
+		if to < time then
+			break
+		elseif from >= time and entity.m_index ~= ki then
+			--
+			-- Sounds?
+		end
+
+		ki = i
+	end
+
+	--
+	-- Interpolate up to current key
+	for _, key in ipairs(mainline[ki]) do
+		for _, object_data in ipairs(key) do
+			if object_data.key then
+				object.Interpolate(entity, object_data, to)
 			end
 		end
-	]]
+	end
+
+	-- If the key switched, remove any transients and add new ones.
+	-- TODO: Can these include sounds? Then what?
+	if ki ~= entity.m_index then
+		local transients = entity.m_transients
+
+		WipeGroup(transients)
+
+		for _, object_data in ipairs(mainline[ki]) do
+			if object_data.object_type then
+				-- TRANSIENT!
+			end
+		end
+	end
+
+	--
+	entity.m_index = ki
+
+	--
+	if to >= anim.length then
+		entity:pause()
+	end
 end
 
 --
-local function Prepare (entity, anim)
-	entity.m_anim = anim
+local function Prepare (entity, anim_id)
+	local anim = entity.m_data[anim_id]
 
-	AuxUpdateEntity(entity, 0, 0)
+	entity.m_anim = anim
+	entity.m_index = nil
+	entity.m_time = 0
+
+	local objects = entity.m_objects
+
+	for _ = 1, #anim do
+		objects:insert(display.newGroup())
+	end
+
+	AuxUpdateEntity(entity, 0, -1)
 
 	entity:pause()
 end
@@ -145,8 +197,9 @@ end
 --- DOCME
 -- @string name
 function Entity:setSequence (name)
-	-- Hide any transients
-	-- Cancel sounds?
+	-- TODO: Cancel sounds?
+	WipeGroup(self.m_objects)
+	WipeGroup(self.m_transients)
 
 	Prepare(self, self._name[name])
 end
@@ -175,7 +228,11 @@ function EntityFactory:New (parent, name)
 
 	--
 	entity.m_data = data
-	entity.m_time = 0
+	entity.m_objects = display.newGroup()
+	entity.m_transients = display.newGroup()
+
+	entity:insert(entity.m_objects)
+	entity:insert(entity.m_transients)
 
 	-- Install methods.
 	for k, v in pairs(Entity) do
