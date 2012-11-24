@@ -75,11 +75,11 @@ function Interpolate.sprite (entity, timeline, props)
 -- if not image...
 	-- image, atlas_image...
 	image.alpha = props.a
-	image.x = props.x -- should be offset to reflect Spriter's coordinate system...
-	image.y = -props.y -- ...but doesn't look right... :/
 	image.xReference = image.width * (props.pivot_x - .5)
 	image.yReference = image.height * (.5 - props.pivot_y)
 	image.rotation = 360 - props.angle % 360
+	image.x = props.x -- should be offset to reflect Spriter's coordinate system...
+	image.y = -props.y -- ...but doesn't look right... :/
 	image.xScale = props.scale_x
 	image.yScale = props.scale_y
 end
