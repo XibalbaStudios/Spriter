@@ -68,10 +68,18 @@ local sf = spriter.NewFactory("monster/Example")
 
 local sp = sf:New()
 
-sp:setSequence("Posture")
+sp:addEventListener("spriter_event", function(event)
+	print("SPRITER EVENT", event.phase, event.target.sequence)
+end)
 
+sp:setSequence("Posture")
 sp:play()
 
 sp.x, sp.y = 200, 500
 
 transition.to(sp, { time = 2000, x = 250, y = 700 })
+
+timer.performWithDelay(5000, function()
+	sp:setSequence("Idle")
+	sp:play()
+end)

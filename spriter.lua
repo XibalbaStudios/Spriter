@@ -24,6 +24,7 @@
 --
 
 -- Standard library imports --
+local floor = math.floor
 local pairs = pairs
 local setmetatable = setmetatable
 local type = type
@@ -108,13 +109,17 @@ end
 
 --- DOCME
 function Entity:pause ()
-	self.m_paused = true
+	self.isPlaying = false
 end
 
 --- DOCME
 function Entity:play ()
-	if self.m_time < self.m_anim.length then
-		self.m_paused = false
+	if not self.isPlaying and self.m_time < self.m_anim.length then
+		self.isPlaying = true
+
+		if self.m_time == 0 then
+			self:dispatchEvent{ name = "spriter_event", phase = "began", target = self }
+		end
 	end
 end
 
@@ -126,7 +131,17 @@ local function WipeGroup (group)
 end
 
 --
-local function AuxUpdateEntity (entity, from, to)
+local function AuxUpdateEntity (entity, from, dt)
+	--
+	local scale = entity.timeScale or 1
+
+	if scale ~= 1 then
+		dt = floor(scale * dt + .5)
+	end
+
+	local to = from + dt
+
+	--
 	local anim = entity.m_anim
 	local mainline = anim.mainline
 	local ki = entity.m_index or 1
@@ -146,6 +161,12 @@ local function AuxUpdateEntity (entity, from, to)
 	end
 
 	--
+	local objects = entity.m_objects
+
+	for i = 1, objects.numChildren do
+		objects[i].isVisible = false
+	end
+	
 	-- Interpolate up to current key
 	for _, object_data in ipairs(mainline[ki]) do
 		if object_data.key then
@@ -169,14 +190,12 @@ local function AuxUpdateEntity (entity, from, to)
 
 	--
 	entity.m_index = ki
-
-	--
 	entity.m_time = to
 
 	if to >= anim.length then
 		entity:pause()
 
-		-- dispatch: ended, bounce, etc...
+		entity:dispatchEvent{ name = "spriter_event", phase = "ended", target = entity } -- todo: loop, bounce
 	end
 end
 
@@ -196,6 +215,8 @@ end
 --- DOCME
 -- @string name
 function Entity:setSequence (name)
+	self.sequence = name
+
 	-- TODO: Cancel sounds?
 	WipeGroup(self.m_objects)
 	WipeGroup(self.m_transients)
@@ -260,10 +281,10 @@ function LiveEntities:enterFrame (event)
 
 		--
 		if entity.parent then
-			if not entity.m_paused then -- CONSIDER: if not entity.isVisible?
+			if entity.isPlaying then
 				local from = entity.m_time
 
-				AuxUpdateEntity(entity, from, from + dt)
+				AuxUpdateEntity(entity, from, dt)
 			end
 
 		--

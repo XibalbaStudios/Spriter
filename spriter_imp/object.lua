@@ -42,19 +42,23 @@ local Props = {}
 local Interpolate = {}
 
 --
-local function GetTimelineGroup (entity, timeline)
+local function GetGroup (entity, z)
+	z = z + 1
+
 	local objects = entity.m_objects
 
-	for _ = objects.numChildren + 1, timeline do
+	for _ = objects.numChildren + 1, z do
 		objects:insert(display.newGroup())
 	end
 
-	return objects[timeline]
+	objects[z].isVisible = true
+
+	return objects[z]
 end
 
 --
-function Interpolate.sprite (entity, timeline, props)
-	local group = GetTimelineGroup(entity, timeline)
+function Interpolate.sprite (entity, z, props)
+	local group = GetGroup(entity, z)
 
 	--
 	local name = props.file.name
@@ -75,13 +79,18 @@ function Interpolate.sprite (entity, timeline, props)
 -- if not image...
 	-- image, atlas_image...
 	image.alpha = props.a
-	image.xReference = image.width * (props.pivot_x - .5)
-	image.yReference = image.height * (.5 - props.pivot_y)
 	image.rotation = 360 - props.angle % 360
-	image.x = props.x -- should be offset to reflect Spriter's coordinate system...
-	image.y = -props.y -- ...but doesn't look right... :/
+
 	image.xScale = props.scale_x
 	image.yScale = props.scale_y
+
+	local xref = (props.pivot_x - .5) * image.width
+	local yref = (.5 - props.pivot_y) * image.height
+
+	image.xOrigin = -xref + props.x
+	image.yOrigin = -yref - props.y
+	image.xReference = xref
+	image.yReference = yref
 end
 
 --- DOCME
@@ -92,23 +101,21 @@ function M.Interpolate (entity, object_data, to)
 	local anim = entity.m_anim
 	local timeline, key = anim[object_data.timeline], object_data.key
 	local p1, p2, props = timeline[key], timeline[key + 1], Props
-	local object_type = p1[1].object_type -- TODO: Flatten... (move into timeline?)
 
 	--
 	if p1.time >= to or not p2 then
-		props = p1[1] -- TODO: Flatten...
+		props = p1
 	elseif to >= p2.time then
-		props = p2[1] -- TODO: Flatten...
+		props = p2
 	else
-		local t = (to - p1.time) / (p2.time - p1.time)
-		local spin = p1.spin
+		local spin, t = p1.spin, (to - p1.time) / (p2.time - p1.time)
 
-		p1, p2 = p1[1], p2[1] -- TODO: Flatten...
-
+		--
 		for k, v in pairs(p1) do
 			if type(v) == "number" then
 				local v2 = p2[k]
 
+				--
 				if k == "angle" then
 					if spin == -1 then
 						if v < v2 then
@@ -119,6 +126,7 @@ function M.Interpolate (entity, object_data, to)
 					end
 				end
 
+				--
 				Props[k] = v + t * (v2 - v)
 			end
 		end
@@ -127,7 +135,7 @@ function M.Interpolate (entity, object_data, to)
 	end
 
 	--
-	Interpolate[object_type](entity, object_data.timeline, props)
+	Interpolate[timeline.object_type](entity, object_data.z_index, props)
 end
 
 --- DOCME
@@ -135,7 +143,7 @@ end
 -- @string object_type
 -- @treturn OD
 function M.LoadPass (oprops, object_type)
-	local object_data = { object_type = object_type }
+	local object_data = {}
 
 	--
 	if object_type == "sprite" or object_type == "entity" or object_type == "sound" then

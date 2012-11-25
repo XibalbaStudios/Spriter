@@ -71,20 +71,23 @@ function M.LoadPass (timeline, animation)
 		end
 	end
 
+	timeline_data.object_type = object_type
 	timeline_data.usage = usage
 
 	--
 	for _, key, kprops in utils.Children(timeline) do
-		local key_data = {
-			curve_type = kprops.curve_type or "linear",
-			spin = tonumber(kprops.spin) or 1,
-			time = tonumber(kprops.time) or 0
-		}
+		local key_data
+
 --assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
-			key_data[#key_data + 1] = TimelineKey(child, cprops, object_type)
+-- assert(not key_data)
+			key_data = TimelineKey(child, cprops, object_type)
 		end
--- ^^^ sounds like key will always be one-element and I could flatten it and object / bone together? 
+
+		key_data.curve_type = kprops.curve_type or "linear"
+		key_data.spin = tonumber(kprops.spin) or 1
+		key_data.time = tonumber(kprops.time) or 0
+
 		utils.AddByID(timeline_data, key_data, kprops)
 	end
 
@@ -97,15 +100,13 @@ end
 function M.Process (data, animation)
 	for _, timeline_data in ipairs(animation) do
 		for _, key_data in ipairs(timeline_data) do
-			for _, object_data in ipairs(key_data) do
-				-- Resolve object properties (file, default values), discard intermediates
-				if object_data.object_type then
-					object.Process(data, object_data)
+			-- Resolve object properties (file, default values)
+			if key_data.file then
+				object.Process(data, key_data)
 
-				-- TODO: bone, variable?
-				else
-					-- ??
-				end
+			-- TODO: bone, variable?
+			else
+				-- ??
 			end
 		end
 	end
