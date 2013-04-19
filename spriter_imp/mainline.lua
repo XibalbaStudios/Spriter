@@ -53,33 +53,52 @@ end
 
 --
 function MainlineKey:object_ref (oprops)
+  local parent = oprops.parent
+   if parent then
+     parent = parent + 1
+   end
 	return {
 		key = utils.Index(oprops, "key"),
 		timeline = utils.Index(oprops, "timeline"),
+    parent = parent,
 		z_index = tonumber(oprops.z_index)
 	}
+end
+
+function MainlineKey:bone_ref (oprops)
+  local parent = oprops.parent
+  if parent then
+    parent = parent + 1
+  end
+ return {
+   key = utils.Index(oprops, "key"),
+   parent = parent,
+   timeline = utils.Index(oprops, "timeline"),
+ }
 end
 
 --- DOCME
 -- @ptable mainline
 -- @ptable animation
-function M.LoadPass (mainline, animation)
---assert(not animation.mainline)
+function M.LoadPass (mainline)
 	local mainline_data = {}
 
 	for _, key, kprops in utils.Children(mainline) do
-		local key_data = { time = tonumber(kprops.time) or 0 }
+		local key_data = { time = tonumber(kprops.time) or 0,
+		                    object_ref = {},
+		                    bone_ref = {} }
 --assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
 			local object_data = MainlineKey(child, cprops)
-
-			utils.AddByID(key_data, object_data, cprops)
+		  -- Save object data to the appropriate table (bone_ref or object_ref list),
+			local table = key_data[child.name]
+			utils.AddByID(table, object_data, cprops)
 		end
 
 		utils.AddByID(mainline_data, key_data, kprops)
 	end
 
-	animation.mainline = mainline_data
+  return mainline_data
 end
 
 --- DOCME
