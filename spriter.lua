@@ -278,7 +278,7 @@ function EntityFactory:New (parent, name)
 
 	--
 	if #LiveEntities == 0 then
-		LiveEntities.time = 0
+		LiveEntities.time = nil
 
 		Runtime:addEventListener("enterFrame", LiveEntities)
 	end

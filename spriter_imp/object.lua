@@ -184,9 +184,15 @@ function M.Interpolate (entity, object_data, to)
 
 	--
 	if p1.time >= to or not p2 then
-		props = p1
+for k, v in pairs(p1) do -- TODO: See if this can still be finessed in the interpolate code?
+	props[k] = v
+end
+--		props = p1
 	elseif to >= p2.time then
-		props = p2
+for k, v in pairs(p2) do -- TODO: Ditto
+	props[k] = v
+end
+--		props = p2
 	else
     props = M.interpolate_props(p1, p2, to)
 		props.file = p1.file
