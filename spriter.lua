@@ -47,10 +47,9 @@ local M = {}
 local Parser = xml.newParser()
 
 -- --
-local TopLevel = utils.FuncTable()
-
-TopLevel.entity = entity.LoadPass
-TopLevel.folder = folder.LoadPass
+local TopLevelLoaders = utils.FuncTable()
+TopLevelLoaders.entity = entity.LoadPass
+TopLevelLoaders.folder = folder.LoadPass
 
 -- Atlas, character map, etc.
 
@@ -59,7 +58,6 @@ local Entity = {}
 
 -- Entity factory methods --
 local EntityFactory = {}
-
 EntityFactory.__index = EntityFactory
 
 -- --
@@ -69,31 +67,42 @@ local LiveEntities = {}
 -- @string file
 -- @param base
 function M.NewFactory (file, base)
+  -- Add .scml to file name, if missing
 	if file:sub(-5) ~= ".scml" then
 		file = file .. ".scml"
 	end
 
-	--
+	-- Parse the xml data
 	local t = Parser:loadFile(file, base)
-	local data = { file = file, base = base or system.ResourceDirectory	}
 
+	-- Create the table that will hold all the data for this sprite
+	-- Initialize with file, folder and path
+	local data = { file = file, base = base or system.ResourceDirectory	}
 	data.path = file:gsub("/.*$", "") .. "/"
 	data.path = data.path:gsub("\\", "/")
 
-	for _, child, cprops in utils.Children(t) do
-		local cdata = TopLevel(child, cprops, data[child.name])
-
-		if cdata then
-			local ctable = data[child.name] or utils.NewLUT()
-
-			utils.AddToLUT(ctable, cdata, cprops)
-
-			data[child.name] = ctable
+  -- Iterate over top-level tags (folders and entities)
+	for _, top_level_obj, tlprops in utils.Children(t) do
+	  local obj_type = top_level_obj.name
+	  print(obj_type, ":", tlprops.name)
+    -- Add blank name if a folder's name is not set (because it's the base folder)
+    if obj_type == "folder" and not tlprops.name then
+      tlprops.name = ""
+    end
+    -- Get data for children of this object
+    -- This calls LoadPass on either Folder or Entity
+    local child_data = TopLevelLoaders(top_level_obj, tlprops)
+		if child_data then
+		  -- Save child data to the appropriate table (entity or folder list),
+			local top_level_table = data[obj_type] or utils.NewLUT()
+			utils.AddByID(top_level_table, child_data, tlprops)
+			data[obj_type] = top_level_table
 		end
 	end
 
-	--
-	entity.Process(data)
+	-- Process the data saved above
+	-- (mostly making sure correct properties are set on objects)
+  entity.Process(data)
 	folder.Process(data)
 --[[
 local path = system.pathForFile( "myfile.txt", system.DocumentsDirectory )
@@ -144,8 +153,10 @@ local function AuxUpdateEntity (entity, from, dt)
 	--
 	local anim = entity.m_anim
 	local mainline = anim.mainline
+
 	local ki = entity.m_index or 1
 
+  -- Find the current key frame index in mainline
 	for i = ki, #mainline do
 		local key = mainline[i]
 		local time = key.time
@@ -160,15 +171,21 @@ local function AuxUpdateEntity (entity, from, dt)
 		ki = i
 	end
 
-	--
+	-- Make all objects invisible
+	-- In the interpolation step, those that should be will be set to visible again
 	local objects = entity.m_objects
-
 	for i = 1, objects.numChildren do
 		objects[i].isVisible = false
 	end
-	
+
 	-- Interpolate up to current key
-	for _, object_data in ipairs(mainline[ki]) do
+	local key = mainline[ki]
+	local bones = key.bone_ref
+  for n, bone_data in ipairs(bones) do
+    object.Interpolate(entity, bone_data, to)
+  end
+	local objects = key.object_ref
+	for n, object_data in ipairs(objects) do
 		if object_data.key then
 			object.Interpolate(entity, object_data, to)
 		end
@@ -248,8 +265,8 @@ function EntityFactory:New (parent, name)
 	entity.m_objects = display.newGroup()
 	entity.m_transients = display.newGroup()
 
-	entity:insert(entity.m_objects)
-	entity:insert(entity.m_transients)
+  entity:insert(entity.m_objects)
+  entity:insert(entity.m_transients)
 
 	-- Install methods.
 	for k, v in pairs(Entity) do

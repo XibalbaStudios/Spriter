@@ -37,7 +37,8 @@ local M = {}
 local TimelineKey = utils.FuncTable()
 
 --
-function TimelineKey:bone (bprops)
+function TimelineKey:bone (bprops, object_type)
+  return object.LoadPass(bprops, object_type)
 end
 
 --
@@ -51,21 +52,26 @@ local UsageDefs = { box = "collision", point = "neither", entity = "display", sp
 --- DOCME
 -- @ptable timeline
 -- @ptable animation
-function M.LoadPass (timeline, animation)
+function M.LoadPass (timeline)
 	local timeline_data, tprops = {}, timeline.properties
 
 	--
 	local object_type, usage = tprops.object_type or "sprite"
 
 	if object_type ~= "sound" then
+    -- Get usage if the object type supports it
+    -- If not present, get default from UsageDefs
 		if object_type ~= "variable" then
 			usage = tprops.usage or UsageDefs[object_type]
 		end
 
+    -- Get name if this is not a sprite or sound
+    -- OR if this is a sprite with usage "collision" or "both"
 		if object_type ~= "sprite" or (usage == "collision" or usage == "both") then
 			timeline_data.name = tprops.name
 		end
 
+    -- Get variable type if this is a variable
 		if object_type == "variable" then
 			timeline_data.variable_type = tprops.variable_type or "string"
 		end
@@ -74,13 +80,11 @@ function M.LoadPass (timeline, animation)
 	timeline_data.object_type = object_type
 	timeline_data.usage = usage
 
-	--
+	-- Get the keys in this timeline
 	for _, key, kprops in utils.Children(timeline) do
 		local key_data
 
---assert(key.id == _ - 1)?
 		for _, child, cprops in utils.Children(key) do
--- assert(not key_data)
 			key_data = TimelineKey(child, cprops, object_type)
 		end
 
@@ -91,8 +95,8 @@ function M.LoadPass (timeline, animation)
 		utils.AddByID(timeline_data, key_data, kprops)
 	end
 
-	utils.AddByID(animation, timeline_data, tprops)
-end	
+  return timeline_data
+end
 
 --- DOCME
 -- @ptable data
