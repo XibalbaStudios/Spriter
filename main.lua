@@ -64,7 +64,7 @@ function vdump (var, name, limit)
 	var_dump.Print(var)
 end
 
-local sf = spriter.NewFactory("monster/Example")
+local sf = spriter.NewFactory("monster/Example.SCML")
 
 local sp = sf:New()
 

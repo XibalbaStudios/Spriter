@@ -30,57 +30,143 @@ local tonumber = tonumber
 -- Modules --
 local mainline = require("spriter_imp.mainline")
 local timeline = require("spriter_imp.timeline")
-local utils = require("spriter_imp.utils")
 
 -- Exports --
 local M = {}
 
---- DOCME
--- @ptable entity
-function M.LoadPass (entity)
-	local entity_data = utils.NewLUT()
+--
+local function AddVars (tracks, arr, oname)
+	for i = 1, #(arr or "") do
+		local info = arr[i]
 
-  -- Extract data for animations (only type of child for entities)
-	for _, anim, aprops in utils.Children(entity) do
-	  -- Set properties from xml attributes: looping, loop_to, length
-		local anim_data = {
-			looping = aprops.looping, loop_to = aprops.loop_to or 0,
-			length = tonumber(aprops.length)
+		tracks = tracks or {}
+
+		tracks[#tracks + 1] = {
+			line = "varline", id = info.id, object = oname, type = info.type,
+			default = info.type == "string" and info.default or tonumber(info.default)
 		}
-    -- Iterate over children (one mainline, zero or many timelines)
-		for _, timeline_data in utils.Children(anim) do
-  		local anim_type = timeline_data.name
-      if (anim_type == 'mainline') then
-			  anim_data.mainline = mainline.LoadPass(timeline_data)
-		  elseif (anim_type == 'timeline') then
-		    local tl = timeline.LoadPass(timeline_data)
-      	utils.AddByID(anim_data, tl, timeline_data.properties)
-	    end
-		end
-
-		utils.AddToLUT(entity_data, anim_data, aprops)
 	end
 
-	return entity_data
+	return tracks
+end
+
+--
+local AddLine = {}
+
+function AddLine:soundline (track)
+	-- TODO
+end
+
+function AddLine:tagline (track, entity)
+	-- TODO
+	-- add first key if missing
+end
+
+function AddLine:varline (track)
+	--
+	-- see varline, etc.
+end
+
+--
+local function AddToLine (anim_data, tracks, md, entity, object)
+	for i = 1, #(tracks or "") do
+		local track = tracks[i]
+
+		if track.line == md.label and track.id == md.id and track.object == object then
+			AddLine[track.line](anim_data, track, entity)
+
+			break
+		end
+	end
 end
 
 --- DOCME
--- @ptable data
-function M.Process (data)
-	for _, entity_data in ipairs(data.entity) do
-		for _, anim_data in ipairs(entity_data) do
+-- @ptable entity
+function M.Load (entity, data)
+	local entity_data = {}
 
-		  local bone_refs = anim_data.mainline[1].bone_ref
-      local bone_table = {}
-    	for idx, bone_data in ipairs(bone_refs) do
-    	  bone_table[idx] = bone_data.timeline
-      end
-      anim_data.bone_table = bone_table
+	-- Extract data for animations (only type of child for entities)
+	local tracks
 
-			mainline.Process(data, anim_data)
-			timeline.Process(data, anim_data)
+	for _, anim in ipairs(entity) do
+		local label = anim.label
+
+		--
+		if label == "obj_info" then
+			for _, oi in ipairs(anim) do
+				if oi.label == "var_defs" then
+					tracks = AddVars(tracks, oi, anim.name)
+				end
+			end
+		elseif label == "var_defs" then
+			tracks = AddVars(tracks, anim)
+		else
+			-- Set properties from xml attributes: looping, length
+			local anim_data, bone_refs = { length = tonumber(anim.length), looping = anim.looping ~= "false" }
+
+			-- stub out tracks: 1, ..., eventline?
+
+			-- Iterate over children (one mainline, zero or many timelines)
+			for _, timeline_data in ipairs(anim) do
+				local anim_type = timeline_data.label
+
+				if anim_type == "mainline" then
+					anim_data.mainline = mainline.Load(timeline_data)
+
+					local bone_refs = anim_data.mainline[1].bone_ref
+
+					if bone_refs then
+						local bone_table = {}
+
+						for _, bone_data in ipairs(bone_refs) do
+							bone_table[#bone_table + 1] = bone_data.timeline
+						end
+
+						anim_data.bone_table = bone_table
+					end
+				elseif anim_type == "timeline" then
+					anim_data[#anim_data + 1] = timeline.Load(timeline_data, data)
+				elseif anim_type == "eventline" then
+					local eline = {}
+
+					for _, eventline_data in ipairs(timeline_data) do
+						local elem_type = eventline_data.label
+
+						if elem_type == "key" then
+							--
+						elseif elem_type == "meta" then
+							for _, md in ipairs(eventline_data) do
+							--	AddToLine(anim_data, tracks, md, eventline_data)
+							end
+						end
+					end
+					
+					-- TODO: add keys...
+
+					anim_data.eventline = eline -- TODO, similar to meta just below...
+				elseif anim_type == "meta" then
+					for _, md in ipairs(timeline_data) do
+						AddToLine(anim_data, tracks, md, entity)
+					end
+				end
+			end
+
+			entity_data[#entity_data + 1] = anim_data
+
+			--
+			local name = anim.name
+
+			if name then
+				local names = entity_data.names or {}
+
+				names[name] = #entity_data
+
+				entity_data.names = names
+			end
 		end
 	end
+
+	return entity_data
 end
 
 -- Export the module.

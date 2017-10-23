@@ -24,10 +24,8 @@
 --
 
 -- Standard library imports --
+local ipairs = ipairs
 local tonumber = tonumber
-
--- Modules --
-local utils = require("spriter_imp.utils")
 
 -- Exports --
 local M = {}
@@ -35,7 +33,7 @@ local M = {}
 --
 local function File (fprops)
 	local ftype = fprops.type or "image"
-	local file_data = { name = fprops.name, type = ftype, width = tonumber(fprops.width) or 0, height = tonumber(fprops.height) or 0 }
+	local file_data = { name = fprops.name or "", type = ftype, width = tonumber(fprops.width) or 0, height = tonumber(fprops.height) or 0 }
 
 	if ftype == "image" or ftype == "atlas_image" then
 		file_data.pivot_x, file_data.pivot_y = tonumber(fprops.pivot_x) or 0, tonumber(fprops.pivot_y) or 1
@@ -54,23 +52,14 @@ end
 
 --- DOCME
 -- @ptable folder
-function M.LoadPass (folder)
+function M.Load (folder)
 	local folder_data = {}
 
-	for _, file, fprops in utils.Children(folder) do
---assert(file.name == "file") ??
-		local file_data = File(fprops)
-
-		utils.AddByID(folder_data, file_data, fprops)
+	for _, file in ipairs(folder) do
+		folder_data[#folder_data + 1] = File(file)
 	end
 
 	return folder_data
-end
-
---- DOCME
--- @ptable data
-function M.Process (data)
-	-- ??
 end
 
 -- Export the module.

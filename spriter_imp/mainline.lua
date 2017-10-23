@@ -29,98 +29,55 @@ local tonumber = tonumber
 
 -- Modules --
 local object = require("spriter_imp.object")
-local utils = require("spriter_imp.utils")
 
 -- Exports --
 local M = {}
 
--- --
-local MainlineKey = utils.FuncTable()
-
 --
-function MainlineKey:object (oprops)
--- Err... not in Example.SCML...
---[[
-	--
-	local folder, file
-	local object_type = self.object_type or "sprite"
-	local x, y = self.x or 0, self.y or 0
-	local xref, yref = self.pivot_x or 0, self.pivot_y or 0 -- or def if sprite
-	local angle, xscale, yscale = self.angle or 0, self.scale_x or 1, self.scale_y or 1
-	local alpha = self.a or 1
-]]
-end
+local function Ref (ref)
+	local parent = ref.parent
 
---
-function MainlineKey:object_ref (oprops)
-  local parent = oprops.parent
-   if parent then
-     parent = parent + 1
-   end
+	if parent then
+		parent = parent + 1
+	end
+
 	return {
-		key = utils.Index(oprops, "key"),
-		timeline = utils.Index(oprops, "timeline"),
-    parent = parent,
-		z_index = tonumber(oprops.z_index)
+		key = (tonumber(ref.key) or 0) + 1,
+		parent = parent,
+		timeline = (tonumber(ref.timeline) or 0) + 1
 	}
-end
-
-function MainlineKey:bone_ref (oprops)
-  local parent = oprops.parent
-  if parent then
-    parent = parent + 1
-  end
- return {
-   key = utils.Index(oprops, "key"),
-   parent = parent,
-   timeline = utils.Index(oprops, "timeline"),
- }
 end
 
 --- DOCME
 -- @ptable mainline
 -- @ptable animation
-function M.LoadPass (mainline)
+function M.Load (mainline)
 	local mainline_data = {}
 
-	for _, key, kprops in utils.Children(mainline) do
-		local key_data = { time = tonumber(kprops.time) or 0,
-		                    object_ref = {},
-		                    bone_ref = {} }
---assert(key.id == _ - 1)?
-		for _, child, cprops in utils.Children(key) do
-			local object_data = MainlineKey(child, cprops)
-		  -- Save object data to the appropriate table (bone_ref or object_ref list),
-			local table = key_data[child.name]
-			utils.AddByID(table, object_data, cprops)
-		end
+	for _, key in ipairs(mainline) do
+		local key_data = {
+			time = tonumber(key.time) or 0
+		}
 
-		utils.AddByID(mainline_data, key_data, kprops)
-	end
+		for _, child in ipairs(key) do
+			local label, ref = child.label
+			local into = key_data[label] or {}
 
-  return mainline_data
-end
+			if label == "bone_ref" or label == "object_ref" then
+				ref = Ref(child)
 
---- DOCME
--- @ptable data
--- @ptable animation
-function M.Process (data, animation)
-	for _, key_data in ipairs(animation.mainline) do
-		for _, object_data in ipairs(key_data) do
-			-- object_ref: No op
-			if object_data.key then
-				--
-
-			-- object: Resolve object properties (file, default values)
-			-- TODO: Untested!
-			elseif #object_data == 0 then
-				object.Process(data, object_data)
-
-			-- hierarchy: TODO!
-			else
+				if label == "object_ref" then
+					ref.z_index = tonumber(child.z_index)
+				end
 			end
+
+			key_data[label], into[#into + 1] = into, ref
 		end
+
+		mainline_data[#mainline_data + 1] = key_data
 	end
+	
+	return mainline_data
 end
 
 -- Export the module.

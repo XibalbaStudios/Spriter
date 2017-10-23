@@ -24,96 +24,113 @@
 --
 
 -- Standard library imports --
+local ipairs = ipairs
 local tonumber = tonumber
 
 -- Modules --
 local object = require("spriter_imp.object")
-local utils = require("spriter_imp.utils")
 
 -- Exports --
 local M = {}
 
--- --
-local TimelineKey = utils.FuncTable()
-
 --
-function TimelineKey:bone (bprops, object_type)
-  return object.LoadPass(bprops, object_type)
+local function Identity (t)
+	return t
 end
 
 --
-function TimelineKey:object (oprops, object_type)
-	return object.LoadPass(oprops, object_type)
+local function Instant (t)
+	return t < 1 and 0 or 1
 end
 
--- --
-local UsageDefs = { box = "collision", point = "neither", entity = "display", sprite = "display" }
+local function Linear (a, b, t)
+	return (1 - t) * a + t * b
+end
+
+local function Quadratic (a, b, c, t)
+	return Linear(Linear(a, b, t), Linear(b, c, t), t)
+end
+
+local function Cubic (a, b, c, d, t)
+	return Linear(Quadratic(a, b, c, t), Quadratic(b, c, d, t), t)
+end
+
+local function Quartic (a, b, c, d, e, t)
+	return Linear(Cubic(a, b, c, d, t), Cubic(b, c, d, e, t), t)
+end
+
+local function Quintic (a, b, c, d, e, f, t)
+	return Linear(Quartic(a, b, c, d, e, t), Quartic(b, c, d, e, f, t), t)
+end
+
+--
+local function MakeCurve (key)
+	local ctype, c1, c2, c3, c4 = key.curve_type or "linear", key.c1, key.c2, key.c3, key.c4
+
+	if ctype == "linear" then
+		return Identity
+	elseif ctype == "quadratic" then
+		return function(t)
+			return Quadratic(0, c1, 1, t)
+		end
+	elseif ctype == "cubic" then
+		return function(t)
+			return Cubic(0, c1, c2, 1, t)
+		end
+	elseif ctype == "quartic" then
+		return function(t)
+			return Quartic(0, c1, c2, c3, 1, t)
+		end
+	elseif ctype == "quintic" then
+		return function(t)
+			return Quintic(0, c1, c2, c3, c4, 1, t)
+		end
+	elseif ctype == "instant" then
+		return Instant
+	elseif ctype == "bezier" then
+		return Linear
+	--[[
+		return function(v1, v2, t)
+			local c = 3 * v1
+			local b = (v2 - v1) - c
+			local a = 1 - c - b
+
+			return ((a * t + b) * t + c) * t -- TODO: find s
+		end]]
+	end
+end
 
 --- DOCME
 -- @ptable timeline
 -- @ptable animation
-function M.LoadPass (timeline)
-	local timeline_data, tprops = {}, timeline.properties
-
-	--
-	local object_type, usage = tprops.object_type or "sprite"
-
-	if object_type ~= "sound" then
-    -- Get usage if the object type supports it
-    -- If not present, get default from UsageDefs
-		if object_type ~= "variable" then
-			usage = tprops.usage or UsageDefs[object_type]
-		end
-
-    -- Get name if this is not a sprite or sound
-    -- OR if this is a sprite with usage "collision" or "both"
-		if object_type ~= "sprite" or (usage == "collision" or usage == "both") then
-			timeline_data.name = tprops.name
-		end
-
-    -- Get variable type if this is a variable
-		if object_type == "variable" then
-			timeline_data.variable_type = tprops.variable_type or "string"
-		end
-	end
-
-	timeline_data.object_type = object_type
-	timeline_data.usage = usage
+function M.Load (timeline, data)
+	local object_type = timeline.object_type or "sprite"
+	local timeline_data = { name = timeline.name, object_type = object_type }
 
 	-- Get the keys in this timeline
-	for _, key, kprops in utils.Children(timeline) do
+	for _, key in ipairs(timeline) do
 		local key_data
 
-		for _, child, cprops in utils.Children(key) do
-			key_data = TimelineKey(child, cprops, object_type)
-		end
+		for _, child in ipairs(key) do
+			local label = child.label
 
-		key_data.curve_type = kprops.curve_type or "linear"
-		key_data.spin = tonumber(kprops.spin) or 1
-		key_data.time = tonumber(kprops.time) or 0
-
-		utils.AddByID(timeline_data, key_data, kprops)
-	end
-
-  return timeline_data
-end
-
---- DOCME
--- @ptable data
--- @ptable animation
-function M.Process (data, animation)
-	for _, timeline_data in ipairs(animation) do
-		for _, key_data in ipairs(timeline_data) do
-			-- Resolve object properties (file, default values)
-			if key_data.file then
-				object.Process(data, key_data)
-
-			-- TODO: bone, variable?
+			if label == "tagline" then
+				key_data = {} -- TODO!
+			elseif label == "varline" then
+				key_data = {} -- TODO!
 			else
-				-- ??
+				key_data = object.Load(child, object_type, data)
 			end
 		end
+
+		key_data.curve = MakeCurve(key)
+		key_data.spin = tonumber(key.spin) or 1
+		key_data.time = tonumber(key.time) or 0
+
+		timeline_data[#timeline_data + 1] = key_data
 	end
+
+	return timeline_data
 end
 
 -- Export the module.
