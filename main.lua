@@ -64,7 +64,9 @@ function vdump (var, name, limit)
 	var_dump.Print(var)
 end
 
-local sf = spriter.NewFactory("monster/Example.SCML")
+local sf = spriter.NewFactory("Dddd.scml")
+--local sf = spriter.NewFactory("GreyGuy/player.scml")
+--local sf = spriter.NewFactory("monster/Example.SCML")
 
 local sp = sf:New()
 
@@ -72,7 +74,9 @@ sp:addEventListener("spriter_event", function(event)
 	print("SPRITER EVENT", event.phase, event.target.sequence)
 end)
 
-sp:setSequence("Posture")
+sp:setSequence("NewAnimation") -- mine
+--sp:setSequence("walk") -- GreyGuy
+--sp:setSequence("Posture") -- monster
 sp:play()
 
 sp.x, sp.y = 200, 500
@@ -80,6 +84,7 @@ sp.x, sp.y = 200, 500
 transition.to(sp, { time = 2000, x = 250, y = 700 })
 
 timer.performWithDelay(5000, function()
-	sp:setSequence("Idle")
+--	sp:setSequence("idle") -- grey guy
+--	sp:setSequence("Idle") -- monster
 	sp:play()
 end)

@@ -64,8 +64,8 @@ local function Quintic (a, b, c, d, e, f, t)
 end
 
 --
-local function MakeCurve (key)
-	local ctype, c1, c2, c3, c4 = key.curve_type or "linear", key.c1, key.c2, key.c3, key.c4
+local function MakeCurve (entry, def)
+	local ctype, c1, c2, c3, c4 = entry.curve_type or def or "linear", entry.c1, entry.c2, entry.c3, entry.c4
 
 	if ctype == "linear" then
 		return Identity
@@ -108,26 +108,60 @@ function M.Load (timeline, data)
 	local timeline_data = { name = timeline.name, object_type = object_type }
 
 	-- Get the keys in this timeline
-	for _, key in ipairs(timeline) do
-		local key_data
+	for _, timeline_entry in ipairs(timeline) do
+		local label = timeline_entry.label
 
-		for _, child in ipairs(key) do
-			local label = child.label
+		--
+		if label == "key" then
+			for _, child in ipairs(timeline_entry) do
+				local key_data = object.Load(child, object_type, data)
 
-			if label == "tagline" then
-				key_data = {} -- TODO!
-			elseif label == "varline" then
-				key_data = {} -- TODO!
-			else
-				key_data = object.Load(child, object_type, data)
+				key_data.spin = tonumber(timeline_entry.spin) or 1
+				key_data.time = tonumber(timeline_entry.time) or 0
+				key_data.curve = MakeCurve(timeline_entry)
+
+				timeline_data[#timeline_data + 1] = key_data
+			end
+
+		--
+		elseif label == "meta" then
+			local obj = tonumber(timeline.obj) + 1
+
+			for _, child in ipairs(timeline_entry) do
+				local md_label = child.label
+
+				if md_label == "tagline" then
+					def_curve = Instant
+					-- Can this use variables logic? (just with Instant as default)
+
+					for _, tag_data in ipairs(child) do
+						for _, tag in ipairs(tag_data) do
+							local t = tonumber(tag.t) + 1
+							-- hook into it
+						end
+					end
+
+					local tdata = {} -- TODO!
+
+					tdata.curve = MakeCurve(child, Instant)
+
+				--
+				elseif md_label == "varline" then
+					local def = tonumber(child.def) + 1
+
+					for _, var_data in ipairs(child) do
+						-- hook into variable (should these all be a flat list up front?)
+					end
+					-- Add to timeline_data?
+					-- Add first entry if no def at time = 0?
+					-- TODO: could patch these into timeline...?
+
+					local vdata = {} -- TODO!
+
+					vdata.curve = MakeCurve(child)
+				end
 			end
 		end
-
-		key_data.curve = MakeCurve(key)
-		key_data.spin = tonumber(key.spin) or 1
-		key_data.time = tonumber(key.time) or 0
-
-		timeline_data[#timeline_data + 1] = key_data
 	end
 
 	return timeline_data

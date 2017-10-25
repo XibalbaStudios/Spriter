@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="r11">
+    <folder id="0">
+        <file id="0" name="3.jpg" width="500" height="375" pivot_x="0" pivot_y="1"/>
+        <file id="1" name="4.jpg" width="500" height="418" pivot_x="0" pivot_y="1"/>
+        <file id="2" name="5.jpg" width="500" height="354" pivot_x="0" pivot_y="1"/>
+    </folder>
+    <tag_list>
+        <i id="0" name="jkfgjf"/>
+        <i id="1" name="tt"/>
+        <i id="2" name="jjii"/>
+    </tag_list>
+    <entity id="0" name="entity_000">
+        <obj_info name="box_000" type="box" w="537.5" h="212.5" pivot_x="0" pivot_y="0"/>
+        <obj_info name="box_001" type="box" w="204.167" h="295.833" pivot_x="0" pivot_y="0"/>
+        <obj_info name="point_000" type="point">
+            <var_defs>
+                <i id="0" name="ddff" type="string" default="ggg"/>
+                <i id="1" name="gggg" type="int" default="3"/>
+            </var_defs>
+            <frames/>
+        </obj_info>
+        <obj_info name="mrp" type="event">
+            <var_defs>
+                <i id="0" name="dug" type="float" default="0"/>
+            </var_defs>
+            <frames/>
+        </obj_info>
+        <var_defs>
+            <i id="0" name="Dog" type="float" default="30"/>
+            <i id="1" name="num" type="int" default="0"/>
+        </var_defs>
+        <animation id="0" name="NewAnimation" length="1000" interval="100">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                </key>
+                <key id="1" time="217">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                </key>
+                <key id="2" time="218">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                </key>
+                <key id="3" time="226">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                    <object_ref id="1" timeline="0" key="0" z_index="1"/>
+                </key>
+                <key id="4" time="238">
+                    <object_ref id="0" timeline="0" key="1" z_index="0"/>
+                </key>
+                <key id="5" time="312">
+                    <object_ref id="0" timeline="0" key="1" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="0" z_index="1"/>
+                </key>
+                <key id="6" time="405">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="0" z_index="1"/>
+                </key>
+                <key id="7" time="519">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="1" z_index="1"/>
+                    <object_ref id="2" timeline="2" key="0" z_index="2"/>
+                </key>
+                <key id="8" time="729">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="2" z_index="1"/>
+                </key>
+                <key id="9" time="883">
+                    <object_ref id="0" timeline="0" key="3" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="3">
+                <key id="0" spin="0">
+                    <object folder="0" file="0" x="-824.666667" y="720.166667" angle="0" scale_x="3.542388" scale_y="4.284858"/>
+                </key>
+                <key id="1" time="238" spin="0">
+                    <object folder="0" file="0" x="-824.666667" y="720.166667" angle="0" scale_x="1.608322" scale_y="4.284858"/>
+                </key>
+                <key id="2" time="405" spin="0">
+                    <object folder="0" file="0" x="-804.206396" y="710.457365" angle="0" scale_x="1.804772" scale_y="3.919939"/>
+                </key>
+                <key id="3" time="883" curve_type="quintic" c1="0.723" c2="0.0845" c3="0.6" c4="0.1549" spin="0">
+                    <object folder="0" file="0" x="-749.666667" y="682.666667" angle="0" scale_x="2.367067" scale_y="2.875442"/>
+                </key>
+            </timeline>
+            <timeline id="1" obj="2" name="point_000" object_type="point">
+                <key id="0" time="312" spin="-1">
+                    <object x="-1012.5" y="316.666667" angle="309.289407"/>
+                </key>
+                <key id="1" time="519">
+                    <object x="-1008.363309" y="320.803357" angle="278.13"/>
+                </key>
+                <key id="2" time="729" spin="-1">
+                    <object x="-1004.166667" y="325" angle="54.462"/>
+                </key>
+                <meta>
+                    <varline id="0" def="0">
+                        <key id="0" time="196" val=""/>
+                    </varline>
+                    <varline id="1" def="1">
+                        <key id="0" time="383" val="3"/>
+                    </varline>
+                    <tagline>
+                        <key id="0" time="383">
+                            <tag id="0" t="1"/>
+                        </key>
+                    </tagline>
+                </meta>
+            </timeline>
+            <timeline id="2" obj="1" name="box_001" object_type="box">
+                <key id="0" time="519" spin="0">
+                    <object x="-829.166667" y="195.833333" pivot_x="0" pivot_y="1" angle="0"/>
+                </key>
+            </timeline>
+            <eventline id="0" obj="3" name="mrp">
+                <key id="0" time="163"/>
+                <meta>
+                    <varline id="0" def="0">
+                        <key id="0" time="190" val="0"/>
+                    </varline>
+                    <tagline>
+                        <key id="0" time="190">
+                            <tag id="0" t="1"/>
+                            <tag id="1" t="0"/>
+                        </key>
+                    </tagline>
+                </meta>
+            </eventline>
+            <meta>
+                <varline id="0" def="1">
+                    <key id="0" time="398" val="0"/>
+                </varline>
+                <varline id="1" def="0">
+                    <key id="0" time="238" val="10"/>
+                    <key id="1" time="584" val="50"/>
+                </varline>
+                <tagline>
+                    <key id="0" time="584">
+                        <tag id="0" t="1"/>
+                        <tag id="1" t="2"/>
+                    </key>
+                </tagline>
+            </meta>
+        </animation>
+    </entity>
+</spriter_data>

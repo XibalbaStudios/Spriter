@@ -1,0 +1,545 @@
+ScmlObject
+{
+    Folder folders[]; // <folder> tags
+    Entity entities[]; // <entity> tags  
+    Folder activeCharacterMap[];
+
+    int currentEntity; 
+    int currentAnimation; 
+
+    float currentTime;    
+
+    SpatialInfo characterInfo()
+    {
+	// Fill a SpatialInfo class with the 
+        // x,y,angle,etc of this character in game
+	
+        // To avoid distortion the character keep 
+        // scaleX and scaleY values equal
+
+	// Make scaleX or scaleY negative to flip on that axis
+		
+	// Examples (scaleX,scaleY)
+	// (1,1) Normal size
+        // (-2.5,2.5) 2.5x the normal size, and flipped on the x axis
+    }		
+
+    void setCurrentTime(float newTime)
+    {
+        Entity currentEnt=entities[currentEntity];
+	Animation currentAnim=currentEnt.animations[currentAnimation];
+	currentAnim.setCurrentTime(newTime);
+    }		
+
+    void applyCharacterMap(CharacterMap charMap, bool reset)
+    {
+	if(reset)
+	{
+	    activeCharacterMap=folders;
+	}
+        for(m in charMap.maps[])
+	{
+	    MapInstruction currentMap=charMap.maps[m];
+	    if(currentMap.tarFolder>-1&&currentMap.tarFile>-1)
+	    {
+	        Folder targetFolder=activeCharacterMap[currentMap.tarFolder];
+		File targetFile=targetFolder.files[currentMap.tarFile];
+		activeCharacterMap[folder].files[file]=targetFile;
+ 	    }
+	}
+    }		
+
+}      
+<?xml version="1.0" encoding="UTF-8"?>
+<spriter_data 
+        scml_version="1.0" 
+        generator="BrashMonkey Spriter" 
+        generator_version="b4">
+Folder
+{
+    string name;
+    File files[]; // <file> tags
+}
+
+File
+{
+    string name; 
+    float pivotX=0;
+    float pivotY=1;
+    (engine specific type) fileReference;
+    // a reference to the image store in this file
+}      
+    <folder   
+            id="0" 
+            name="relative folder path">
+        <file 
+            id="0" 
+            name="<relative file path>" 
+            width="<image width>" 
+            height="<image height>" 
+            pivot_x="0.0" 
+            pivot_y="1.0"/>
+    </folder>     
+Entity
+{
+    string name;
+    CharacterMap characterMaps[]; // <character_map> tags
+    Animation animations[]; // <animation> tags
+}
+    <entity 
+            id="0" 
+            name="entity name"> 
+CharacterMap
+{
+    string name;
+    MapInstruction maps[]; // <map> tags
+}
+
+MapInstruction
+{
+    int folder;
+    int file;
+    int tarFolder=-1;
+    int tarFile=-1;
+}
+        <character_map 
+                id="0" 
+		name="character map name">
+	    <map 
+		    folder="0" 
+		    file="0 
+		    target_folder="-1" 
+		    target_file="-1"/>
+	</character_map>
+Animation
+{
+    string name;
+    int length;
+    int loopType=LOOPING; // enum : NO_LOOPING,LOOPING
+    MainlineKey mainlineKeys[]; // <key> tags within a single <mainline> tag
+    Timeline timelines[]; // <timeline> tags
+
+    void setCurrentTime(float newTime)
+    {
+        if(loopType==NO_LOOPING)
+        {
+            newTime=min(newTime,length);
+        }
+        else if(loopType==LOOPING)
+        {
+            newTime=newTime%length;
+        }
+
+        updateCharacter(mainlineKeyFromTime(newTime),newTime);
+    }
+
+    void updateCharacter(MainlineKey mainKey,int newTime)
+    {
+        BoneTimelineKey transformedBoneKeys[];
+        for(b in mainKey.boneRefs[])
+        {
+            SpatialInfo parentInfo;
+            Ref currentRef=mainKey.boneRefs[b]; 
+            if(currentRef.parent>=0)
+            {
+                parentInfo=transformBoneKeys[currentRef.parent].info;
+            }
+            else
+            {
+                parentInfo=characterInfo;
+            }
+
+            TimelineKey currentKey=keyFromRef(currentRef,newTime);
+            currentKey.info=currentKey.info.unmapFromParent(parentInfo);
+            transformBoneKeys.push(currentKey);
+        }
+
+        TimelineKey objectKeys[];
+        for(o in mainKey.objRefs[])
+        {
+            SpatialInfo parentInfo;
+            Ref currentRef=mainKey.objRefs[b];
+
+            if(currentRef.parent>=0)
+            {
+                parentInfo=transformBoneKeys[currentRef.parent].info;
+            }
+            else
+            {
+                parentInfo=characterInfo;
+            }
+
+            TimelineKey currentKey=keyFromRef(currentRef,newTime);
+            currentKey.info=currentKey.info.unmapFromParent(parentInfo);
+            objectKeys.push(currentKey);
+        }
+
+        // <expose objectKeys to api users to retrieve AND replace objectKeys>
+
+        for(k in objectKeys)
+        {            
+            objectKeys[k].paint();
+        }
+    }
+
+    MainlineKey mainlineKeyFromTime(int time)
+    {
+        int currentMainKey=0;
+        for(m in mainlineKeys)
+        {
+            if(mainlineKeys[m].time<=currentTime)
+            {
+                currentMainKey=m;
+            }
+            if(mainlineKeys[m]>=currentTime)
+            {
+                break;
+            }
+        }
+        return mainlineKeys[currentMainKey];
+    }	
+   
+    TimelineKey keyFromRef(Ref ref,int newTime)
+    {
+        Timeline timeline=timelines[ref.timeline];
+        TimelineKey keyA=timeline.keys[ref.key];
+        
+        if(timeline.keys.size()==1)
+        {
+            return keyA;
+        }
+        
+        int nextKeyIndex=ref.key+1;
+        
+        if(nextKeyIndex>=timeline.keys.size())
+        {
+            if(loopType=LOOPING)
+            {
+                nextKeyIndex=0; 
+            }
+            else
+            {
+                return keyA;
+            }
+        }
+  
+        TimelineKey keyB=timeline.keys[nextKeyIndex];
+        int keyBTime=keyB.time;
+
+        if(keyBTime<keyA.time)
+        {
+            keyBTime=keyBTime+length;
+        }
+
+        return keyA.interpolate(keyB,keyBTime,newTime);
+    }	
+
+}     
+        <animation 
+                id="0" 
+                name="animation name" 
+                length="<length in milliseconds>"
+                looping="true,false"> 
+MainlineKey
+{
+    int time=0;
+    Ref boneRefs[]; // <bone_ref> tags
+    Ref objectRefs[]; // <object_ref> tags      
+            <mainline>
+                <key 
+                        id="0"
+                        time="0">      
+Ref
+{   
+    int parent=-1; // -1==no parent - uses ScmlObject spatialInfo as parentInfo
+    int timeline;
+    int key;   
+}
+
+                    <bone_ref             
+                            id="1"             
+                            parent="-1" 
+                            timeline="0" 
+                            key="0"/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    <object_ref 
+                            id="0"
+                            name="wings_0_000" 
+                            folder="0" 
+                            file="6" 
+
+		            parent="0"  
+                            timeline="0" 
+                            key="0" 
+                            z_index="0"/>
+                </key>
+            </mainline>      
+Timeline
+{
+    string name;
+    int objectType; // enum : SPRITE,BONE,BOX,POINT,SOUND,ENTITY,VARIABLE
+    TimelineKey keys[]; // <key> tags within <timeline> tags    
+}     
+            <timeline 
+                    id="0" 
+                    name="timeline name"
+                    type="sprite">      
+TimelineKey
+{
+    int time=0;
+    int curveType=LINEAR; // enum : INSTANT,LINEAR,QUADRATIC,CUBIC
+    float c1; 
+    float c2; 
+    
+    TimelineKey interpolate(TimelineKey nextKey,int nextKeyTime,float currentTime)
+    {
+        return linear(nextKey,getTWithNextKey(nextKey,nextKeyTime,currentTime));
+    }           
+
+    float getTWithNextKey(TimelineKey nextKey,int nextKeyTime,float currentTime)
+    {
+        if(curveType==INSTANT || time==nextKey.time)
+        {
+            return 0;
+        }
+        
+        float t=(currentTime-time)/(nextKey.time-time);
+
+        if(curveType==LINEAR)
+        {
+            return t;        
+        }
+        else if(curveType==QUADRATIC)
+        {
+            return(quadratic(0.0,c1,1.0,t));
+        }
+        else if(curveType==CUBIC)
+        {  
+            return(cubic(0.0,c1,c2,1.0,t));
+        }
+    
+        return 0; // Runtime should never reach here        
+    }	
+
+    TimelineKey linear(TimelineKey keyB,t)
+    {
+        // overridden in inherited types  return linear(this,keyB,t);
+    }
+
+}
+
+SpatialTimelineKey : TimelineKey
+{
+    SpatialInfo info;
+    void paint();
+}
+
+SpatialInfo
+{
+    float x=0; 
+    float y=0; 
+    float angle=0;
+    float scaleX=1; 
+    float scaleY=1; 
+    float a=1;
+    int spin=1;
+
+    SpatialInfo unmapFromParent(SpatialInfo parentInfo)
+    {
+        SpatialInfo unmappedObj=this;
+        unmappedObj.angle+=parentInfo.angle;
+        unmappedObj.scaleX*=parentInfo.scaleX;
+        unmappedObj.scaleY*=parentInfo.scaleY;
+        unmappedObj.a*=parentInfo.a;
+
+        if(x!=0||y!=0)  
+        {
+            preMultX=x*parentInfo.xScale;
+            preMultY=y*parentInfo.yScale;
+            float s = sin(toRadians(parentInfo.angle));
+            float c = cos(toRadians(parentInfo.angle));
+            unmappedObj.x = (preMultX * c) - (preMultY * s);
+            unmappedObj.y = (preMultX * s) + (preMultY * c);
+            unmappedObj.x+=parentInfo.x;
+            unmappedObj.y+=parentInfo.y;
+        }
+        else 
+        {
+            // Mandatory optimization for future features           
+            unmappedObj.x=parentInfo.x;
+            unmappedObj.y=parentInfo.y;
+        }
+
+        return unmappedObj;
+    }
+
+}
+
+BoneTimelineKey : SpatialTimelineKey
+{
+    // unimplemented in Spriter
+    int length=200;
+    int height=10;
+
+    // override paint if you want debug visuals for bones
+    void paint()
+    {
+        if(paintDebugBones)
+        {
+            float drawLength=length*scaleX;
+            float drawHeight=height*scaleY;
+            // paint debug bone representation 
+            // e.g. line starting at x,y,at angle, 
+            // of length drawLength, and height drawHeight
+         }
+    }           
+
+    TimelineKey linear(TimelineKey keyB,float t)
+    // keyB must be BoneTimelineKeys
+    {
+        BoneTimelineKey returnKey=this;
+        returnKey.info=linear(info,keyB.info,spin,t);
+
+        if(paintDebugBones)
+        {
+            returnKey.length=linear(length,keyB.length,t);
+            returnKey.width=linear(width,keyB.width,t);
+        }
+
+        return returnKey;
+    }
+
+}
+
+SpriteTimelineKey : SpatialTimelineKey
+{
+    int folder; // index of the folder within the ScmlObject
+    int file;  
+    bool useDefaultPivot; // true if missing pivot_x and pivot_y in object tag
+    float pivot_x=0;
+    float pivot_y=1;
+
+    void paint()
+    {
+        int paintPivotX;
+        int paintPivotY;
+        if(useDefaultPivot)
+        {
+            paintPivotX=ScmlObject.activeCharacterMap[folder].files[file].pivotX;
+            paintPivotY=ScmlObject.activeCharacterMap[folder].files[file].pivotY;
+        }
+        else
+        {
+            paintPivotX=pivot_x;
+            paintPivotY=pivot_y;
+        }
+          
+        // paint image represented by
+        // ScmlObject.activeCharacterMap[folder].files[file],fileReference 
+        // at x,y,angle (counter-clockwise), offset by paintPivotX,paintPivotY
+    }
+
+    TimelineKey linear(TimelineKey keyB,float t)
+    // keyB must be SpriteTimelineKey
+    {
+        SpriteTimelineKey returnKey=this;
+        returnKey.info=linear(info,keyB.info,spin,t);
+        if(!useDefaultPoint)
+        {
+            returnKey.pivot_x=linear(pivot_x,keyB.pivot_x,t);
+            returnKey.pivot_y=linear(pivot_y,keyB.pivot_y,t);
+        }
+
+        return returnKey;
+    }
+
+}    
+                <key 
+                        id="0"
+                        time="0"
+                        spin="1"
+                        curve_type="0"
+                        c1=""
+                        c2="">
+		 
+
+
+
+
+
+
+
+
+
+
+
+                    <bone 
+                        x="0" 
+                        y="0" 
+                        angle="0" 
+                        scale_x="1"
+                        scale_y="1"
+                        a="1"/>
+                    <object 
+                        folder="0" 
+                        file="0" 
+                        x="0" 
+                        y="0" 
+                        angle="0" 
+                        scale_x="1"
+                        scale_y="1"
+                        pivot_x="0"
+                        pivot_y="1"
+			a="1"/>
+                </key>
+            </timeline>
+        </animation>
+    </entity>
+</spriter_data>      
+
+SpatialInfo linear(SpatialInfo infoA,SpatialInfo infoB,int spin,float t)
+{
+    SpatialInfo resultInfo;
+    resultInfo.x=linear(infoA.x,infoB.x,t); 
+    resultInfo.y=linear(infoA.y,infoB.y,t);  
+    resultInfo.angle=angleLinear(infoA.angle,infoB.angle,spin,t); 
+    resultInfo.scaleX=linear(infoA.scaleX,infoB.scaleX,t); 
+    resultInfo.scaleY=linear(infoA.scaleY,infoB.scaleY,t); 
+    resultInfo.a=linear(infoA.a,infoB.a,t); 
+}
+
+float angleLinear(float angleA,float angleB,int spin,float t)
+{
+    if(spin==0)
+    {
+        return angleA;
+    }
+    if(spin>0)
+    {
+        if((angleB-angleA)<0)
+        {
+            angleB+=360;
+        }
+    }
+    else if(spin<0)
+    {
+        if((angleB-angleA)>0)
+        {    
+            angleB-=360;
+        }
+    }
+
+    return linear(angleA,angleB,t);
+}

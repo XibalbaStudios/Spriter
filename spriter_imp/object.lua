@@ -292,25 +292,5 @@ function M.Load (oprops, object_type, data)
 	return object_data
 end
 
---- DOCME
--- @ptable data
--- @ptable object
-function M.Process (data, object)
-	local folder = data.folder[object.folder]
-	local file = folder and folder[object.file]
-
-	if file then
-		object.file, object.folder = file
-
-		if object.pivot_x == false then
-			object.pivot_x = file.pivot_x
-		end
-
-		if object.pivot_y == false then
-			object.pivot_y = file.pivot_y
-		end
-	end
-end
-
 -- Export the module.
 return M
